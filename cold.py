@@ -55,6 +55,10 @@ def getheaders(token=None):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
     }
 
+    # Check if the operating system is Windows 11
+    if sys.platform == "win32" and platform.release() == "10.0.22000":
+        headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Edg/115.0.1901.203"
+
     if token:
         headers.update({"Authorization": token})
 
