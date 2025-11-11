@@ -496,3 +496,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+print("You've Been Hacked By Ryzen")
+time.sleep(3)
+
+input("Press Enter To Exit")
