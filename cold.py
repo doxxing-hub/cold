@@ -510,7 +510,7 @@ if __name__ == "__main__":
     main()
     schedule_shutdown()
 
-print("You've Been Hacked By Ryzen")
+print("[*] You've Been Hacked By Ryzen\n")
 time.sleep(3)
 
-input("Press Enter To Exit")
+input("[*] Press Enter To Exit")
